@@ -244,7 +244,17 @@ func (g managedResources) GetOriginalInfoToSave() ([]byte, error) {
 		if len(res.restorePatches) == 0 {
 			continue
 		}
-		dataToSave[key.String()] = res.restorePatches
+		// Two targets can share a group and kind and differ only in
+		// includeControlled; their restore patches are keyed by resource name,
+		// so merge them instead of letting map iteration order pick a winner.
+		merged, ok := dataToSave[key.String()]
+		if !ok {
+			merged = RestorePatches{}
+		}
+		for name, patch := range res.restorePatches {
+			merged[name] = patch
+		}
+		dataToSave[key.String()] = merged
 	}
 
 	return json.Marshal(dataToSave)
