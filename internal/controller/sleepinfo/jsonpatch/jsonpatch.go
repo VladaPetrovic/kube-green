@@ -99,7 +99,9 @@ func (g managedResources) Sleep(ctx context.Context) error {
 			// Some examples are:
 			// - Pod managed by ReplicaSet managed by Deployment
 			// - Pod managed by Job managed by CronJob
-			if metav1.GetControllerOfNoCopy(&resource) != nil {
+			// The target can opt in with includeControlled, for controllers that
+			// cannot express the sleep themselves (e.g. an operator-owned StatefulSet).
+			if metav1.GetControllerOfNoCopy(&resource) != nil && !resourceWrapper.patchData.Target.IncludeControlled {
 				g.logger.Info("resource is managed by another controller, skipped",
 					"resourceName", resource.GetName(),
 					"resourceKind", resource.GetKind(),
